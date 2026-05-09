@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Couple Budget Dashboard"
+version = "1.0.0"
+id = "artifacts/budget-dashboard"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18717
+
+[services.development]
+run = "pnpm --filter @workspace/budget-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/budget-dashboard", "run", "build" ]
+publicDir = "artifacts/budget-dashboard/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18717"
+BASE_PATH = "/"
