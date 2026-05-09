@@ -33,7 +33,7 @@ router.patch("/partners/:id", async (req, res) => {
       .set(updates)
       .where(eq(partnersTable.id, id))
       .returning();
-    if (!updated) return res.status(404).json({ error: "Partner not found" });
+    if (!updated) { res.status(404).json({ error: "Partner not found" }); return; }
     res.json({ ...updated, avatarInitials: updated.avatarInitials || updated.name.slice(0, 2).toUpperCase() });
   } catch (err) {
     res.status(500).json({ error: "Failed to update partner" });

@@ -74,7 +74,7 @@ export default function Bills() {
   const handleSave = async () => {
     const payload = { ...form, notes: form.notes || null, categoryId: form.categoryId || null };
     if (editBill) {
-      await updateBill.mutateAsync({ billId: editBill.id, data: payload });
+      await updateBill.mutateAsync({ id: editBill.id, data: payload });
     } else {
       await createBill.mutateAsync({ data: payload });
     }
@@ -83,11 +83,11 @@ export default function Bills() {
   };
 
   const handleDelete = async () => {
-    if (deleteId !== null) { await deleteBill.mutateAsync({ billId: deleteId }); invalidate(); setDeleteId(null); }
+    if (deleteId !== null) { await deleteBill.mutateAsync({ id: deleteId }); invalidate(); setDeleteId(null); }
   };
 
   const handleTogglePaid = async (bill: Bill) => {
-    await markPaid.mutateAsync({ billId: bill.id, data: { paid: !bill.isPaidThisCycle } });
+    await markPaid.mutateAsync({ id: bill.id });
     invalidate();
   };
 

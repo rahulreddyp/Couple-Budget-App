@@ -28,8 +28,8 @@ export default function Budgets() {
   const [editBudget, setEditBudget] = useState<Budget | null>(null);
   const [form, setForm] = useState({ categoryId: 7, amount: 500 });
 
-  const { data: budgets, isLoading: loadingBudgets } = useGetBudgets({ query: { queryKey: ["/api/budgets", month] } }, { month });
-  const { data: bva } = useGetBudgetVsActual({ query: { queryKey: ["/api/dashboard/budget-vs-actual", month] } }, { month });
+  const { data: budgets, isLoading: loadingBudgets } = useGetBudgets({ month }, { query: { queryKey: ["/api/budgets", month] } });
+  const { data: bva } = useGetBudgetVsActual({ month }, { query: { queryKey: ["/api/dashboard/budget-vs-actual", month] } });
   const { data: categories } = useGetCategories();
 
   const createBudget = useCreateBudget();
@@ -43,7 +43,7 @@ export default function Budgets() {
 
   const handleSave = async () => {
     if (editBudget) {
-      await updateBudget.mutateAsync({ budgetId: editBudget.id, data: { amount: form.amount } });
+      await updateBudget.mutateAsync({ id: editBudget.id, data: { amount: form.amount } });
     } else {
       await createBudget.mutateAsync({ data: { month, categoryId: form.categoryId, amount: form.amount, rolloverEnabled: false } });
     }
@@ -53,7 +53,7 @@ export default function Budgets() {
   };
 
   const handleDelete = async (id: number) => {
-    await deleteBudget.mutateAsync({ budgetId: id });
+    await deleteBudget.mutateAsync({ id });
     invalidate();
   };
 
@@ -61,7 +61,7 @@ export default function Budgets() {
 
   const totalBudget = budgets?.reduce((s, b) => s + b.amount, 0) ?? 0;
   const totalActual = bva?.reduce((s, b) => s + b.actual, 0) ?? 0;
-  const overBudgetCount = bva?.filter((b) => b.actual > b.budget).length ?? 0;
+  const overBudgetCount = bva?.filter((b) => b.actual > b.budgeted).length ?? 0;
 
   return (
     <div className="p-6 space-y-5">

@@ -95,7 +95,7 @@ router.patch("/bills/:id", async (req, res) => {
     if (b.notes !== undefined) updates.notes = b.notes;
 
     const [row] = await db.update(billsTable).set(updates).where(eq(billsTable.id, id)).returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     const [enriched] = await enrichBills([row]);
     res.json(enriched);
   } catch {
@@ -120,7 +120,7 @@ router.post("/bills/:id/mark-paid", async (req, res) => {
       .set({ isPaidThisCycle: true, lastPaidDate: today })
       .where(eq(billsTable.id, id))
       .returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     const [enriched] = await enrichBills([row]);
     res.json(enriched);
   } catch {

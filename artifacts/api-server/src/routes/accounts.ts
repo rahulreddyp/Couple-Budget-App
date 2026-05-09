@@ -43,7 +43,7 @@ router.patch("/accounts/:id", async (req, res) => {
     if (req.body.balance !== undefined) updates.balance = String(req.body.balance);
     if (req.body.isJoint !== undefined) updates.isJoint = req.body.isJoint;
     const [row] = await db.update(accountsTable).set(updates).where(eq(accountsTable.id, id)).returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     res.json({ ...row, balance: row.balance ? parseFloat(row.balance) : null });
   } catch {
     res.status(500).json({ error: "Failed to update account" });

@@ -84,7 +84,7 @@ export default function Savings() {
       notes: form.notes || null,
     };
     if (editGoal) {
-      await updateGoal.mutateAsync({ goalId: editGoal.id, data: payload });
+      await updateGoal.mutateAsync({ id: editGoal.id, data: payload });
     } else {
       await createGoal.mutateAsync({ data: payload });
     }
@@ -93,12 +93,12 @@ export default function Savings() {
   };
 
   const handleDelete = async () => {
-    if (deleteId !== null) { await deleteGoal.mutateAsync({ goalId: deleteId }); invalidate(); setDeleteId(null); }
+    if (deleteId !== null) { await deleteGoal.mutateAsync({ id: deleteId }); invalidate(); setDeleteId(null); }
   };
 
   const handleContribute = async () => {
     if (contributeGoalId !== null) {
-      await contribute.mutateAsync({ goalId: contributeGoalId, data: { amount: contributeAmount, notes: "Manual contribution" } });
+      await contribute.mutateAsync({ id: contributeGoalId, data: { amount: contributeAmount } });
       invalidate();
       setContributeOpen(false);
     }

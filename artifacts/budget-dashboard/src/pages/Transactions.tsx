@@ -90,7 +90,7 @@ export default function Transactions() {
 
   const handleSave = async () => {
     if (editTx) {
-      await updateTx.mutateAsync({ transactionId: editTx.id, data: form });
+      await updateTx.mutateAsync({ id: editTx.id, data: form });
     } else {
       await createTx.mutateAsync({ data: form });
     }
@@ -100,7 +100,7 @@ export default function Transactions() {
 
   const handleDelete = async () => {
     if (deleteId !== null) {
-      await deleteTx.mutateAsync({ transactionId: deleteId });
+      await deleteTx.mutateAsync({ id: deleteId });
       invalidate();
       setDeleteId(null);
     }

@@ -64,7 +64,7 @@ router.patch("/budgets/:id", async (req, res) => {
     if (req.body.rolloverEnabled !== undefined) updates.rolloverEnabled = req.body.rolloverEnabled;
 
     const [row] = await db.update(budgetsTable).set(updates).where(eq(budgetsTable.id, id)).returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
 
     const cats = await db.select().from(categoriesTable).where(eq(categoriesTable.id, row.categoryId));
     const cat = cats[0];

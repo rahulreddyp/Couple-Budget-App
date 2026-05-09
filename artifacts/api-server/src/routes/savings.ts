@@ -71,7 +71,7 @@ router.patch("/savings-goals/:id", async (req, res) => {
     if (b.notes !== undefined) updates.notes = b.notes;
 
     const [row] = await db.update(savingsGoalsTable).set(updates).where(eq(savingsGoalsTable.id, id)).returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     const [enriched] = await enrichGoals([row]);
     res.json(enriched);
   } catch {
@@ -98,7 +98,7 @@ router.post("/savings-goals/:id/contribute", async (req, res) => {
       })
       .where(eq(savingsGoalsTable.id, id))
       .returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     const [enriched] = await enrichGoals([row]);
     res.json(enriched);
   } catch {

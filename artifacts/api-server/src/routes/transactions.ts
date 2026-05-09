@@ -153,7 +153,7 @@ router.get("/transactions/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const [row] = await db.select().from(transactionsTable).where(eq(transactionsTable.id, id));
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     const catMap = await getCatMap();
     const partnerMap = await getPartnerMap();
     res.json(txRow(row as unknown as Record<string, unknown>, catMap, partnerMap));
@@ -181,7 +181,7 @@ router.patch("/transactions/:id", async (req, res) => {
     if (b.isRecurring !== undefined) updates.isRecurring = b.isRecurring;
 
     const [row] = await db.update(transactionsTable).set(updates).where(eq(transactionsTable.id, id)).returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     const catMap = await getCatMap();
     const partnerMap = await getPartnerMap();
     res.json(txRow(row as unknown as Record<string, unknown>, catMap, partnerMap));

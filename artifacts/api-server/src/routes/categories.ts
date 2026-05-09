@@ -36,7 +36,7 @@ router.patch("/categories/:id", async (req, res) => {
     const fields = ["name", "color", "icon", "expenseType", "sortOrder"];
     for (const f of fields) if (req.body[f] !== undefined) updates[f === "expenseType" ? "expenseType" : f] = req.body[f];
     const [row] = await db.update(categoriesTable).set(updates).where(eq(categoriesTable.id, id)).returning();
-    if (!row) return res.status(404).json({ error: "Not found" });
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
     res.json(row);
   } catch {
     res.status(500).json({ error: "Failed to update category" });

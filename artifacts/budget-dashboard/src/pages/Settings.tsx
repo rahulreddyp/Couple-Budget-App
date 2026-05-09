@@ -21,7 +21,7 @@ export default function Settings() {
   const [colors, setColors] = useState<Record<number, string>>({});
 
   const handleSavePartner = async (id: number) => {
-    await updatePartner.mutateAsync({ partnerId: id, data: { name: names[id], color: colors[id] } });
+    await updatePartner.mutateAsync({ id, data: { name: names[id], color: colors[id] } });
     queryClient.invalidateQueries({ queryKey: ["/api/partners"] });
   };
 
