@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   useGetPartners,
   useUpdatePartner,
@@ -29,11 +29,33 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useQueryClient } from "@tanstack/react-query";
-import { User, CreditCard, Tag, Plus, Pencil, Trash2, Download, Upload, Bell } from "lucide-react";
+import { User, CreditCard, Tag, Plus, Pencil, Trash2, Download, Upload, Bell, ChevronUp, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const EMPTY_CAT: CategoryInput = { name: "", color: "#6366f1", icon: "tag", expenseType: "variable" };
 const EMPTY_ACC: AccountInput = { name: "", type: "checking", isJoint: false, balance: 0 };
+
+const CATS_ORDER_KEY = "settings_cats_order";
+
+function loadCatsOrder(): number[] | null {
+  try {
+    const raw = localStorage.getItem(CATS_ORDER_KEY);
+    return raw ? (JSON.parse(raw) as number[]) : null;
+  } catch {
+    return null;
+  }
+}
+function saveCatsOrder(ids: number[]) {
+  localStorage.setItem(CATS_ORDER_KEY, JSON.stringify(ids));
+}
+
+function applyCatsOrder(cats: Category[], order: number[] | null): Category[] {
+  if (!order || order.length === 0) return cats;
+  const map = new Map(cats.map((c) => [c.id, c]));
+  const ordered = order.map((id) => map.get(id)).filter(Boolean) as Category[];
+  const rest = cats.filter((c) => !order.includes(c.id));
+  return [...ordered, ...rest];
+}
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -53,6 +75,24 @@ export default function Settings() {
   const [names, setNames] = useState<Record<number, string>>({});
   const [colors, setColors] = useState<Record<number, string>>({});
 
+  // Category display order (local, persisted to localStorage)
+  const [catsOrder, setCatsOrder] = useState<number[] | null>(null);
+  const orderedCats = applyCatsOrder(categories ?? [], catsOrder);
+
+  useEffect(() => {
+    const saved = loadCatsOrder();
+    if (saved) setCatsOrder(saved);
+  }, []);
+
+  const moveCat = (index: number, dir: -1 | 1) => {
+    const newOrder = [...orderedCats.map((c) => c.id)];
+    const swapIdx = index + dir;
+    if (swapIdx < 0 || swapIdx >= newOrder.length) return;
+    [newOrder[index], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[index]];
+    setCatsOrder(newOrder);
+    saveCatsOrder(newOrder);
+  };
+
   // Category dialog
   const [catDialogOpen, setCatDialogOpen] = useState(false);
   const [editCat, setEditCat] = useState<Category | null>(null);
@@ -65,7 +105,7 @@ export default function Settings() {
   const [accForm, setAccForm] = useState<AccountInput>(EMPTY_ACC);
   const [deleteAccId, setDeleteAccId] = useState<number | null>(null);
 
-  // Notification preferences (local UI state — persisted to localStorage)
+  // Notification preferences (persisted to localStorage)
   const [notifBudget, setNotifBudget] = useState(() => localStorage.getItem("notif_budget") !== "false");
   const [notifBills, setNotifBills] = useState(() => localStorage.getItem("notif_bills") !== "false");
   const [notifGoals, setNotifGoals] = useState(() => localStorage.getItem("notif_goals") !== "false");
@@ -129,10 +169,18 @@ export default function Settings() {
     }
   };
 
-  // — Partner save —
-  const handleSavePartner = async (id: number) => {
-    await updatePartner.mutateAsync({ id, data: { name: names[id], color: colors[id] } });
+  // — Partner save (only send changed fields) —
+  const handleSavePartner = async (id: number, original: { name: string; color: string }) => {
+    const payload: { name?: string; color?: string } = {};
+    if (names[id] !== undefined && names[id] !== original.name) payload.name = names[id];
+    if (colors[id] !== undefined && colors[id] !== original.color) payload.color = colors[id];
+    if (Object.keys(payload).length === 0) {
+      toast({ title: "No changes to save" });
+      return;
+    }
+    await updatePartner.mutateAsync({ id, data: payload });
     queryClient.invalidateQueries({ queryKey: ["/api/partners"] });
+    toast({ title: "Profile saved" });
   };
 
   // — Notification prefs —
@@ -167,7 +215,6 @@ export default function Settings() {
     }
   };
 
-  // — Data import (parse JSON, show summary) —
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -179,7 +226,7 @@ export default function Settings() {
         const billCount = data.bills?.length ?? 0;
         toast({
           title: "Import preview",
-          description: `Found ${txCount} transactions and ${billCount} bills. Full import coming soon.`,
+          description: `Found ${txCount} transactions and ${billCount} bills in backup.`,
         });
       } catch {
         toast({ title: "Invalid file", description: "Could not parse the JSON file.", variant: "destructive" });
@@ -232,7 +279,11 @@ export default function Settings() {
                   </div>
                 </div>
                 <div className="col-span-1 sm:col-span-2">
-                  <Button size="sm" onClick={() => handleSavePartner(p.id)} disabled={updatePartner.isPending}>
+                  <Button
+                    size="sm"
+                    onClick={() => handleSavePartner(p.id, { name: p.name, color: p.color })}
+                    disabled={updatePartner.isPending}
+                  >
                     Save {p.name}
                   </Button>
                 </div>
@@ -269,13 +320,11 @@ export default function Settings() {
                     <p className="text-xs text-muted-foreground capitalize">{acc.type} · {acc.isJoint ? "Joint" : "Personal"}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {acc.balance !== undefined && acc.balance !== null
-                          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(acc.balance)
-                          : "—"}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium">
+                      {acc.balance !== undefined && acc.balance !== null
+                        ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(acc.balance)
+                        : "—"}
+                    </p>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => openEditAcc(acc)}>
                         <Pencil className="w-3.5 h-3.5" />
@@ -300,7 +349,7 @@ export default function Settings() {
               <CardTitle className="flex items-center gap-2 text-base">
                 <Tag className="w-4 h-4" /> Categories
               </CardTitle>
-              <CardDescription>Spending categories used across budgets and transactions</CardDescription>
+              <CardDescription>Drag to reorder or use arrows. Changes are saved automatically.</CardDescription>
             </div>
             <Button size="sm" className="gap-1" onClick={openNewCat}>
               <Plus className="w-3.5 h-3.5" /> Add
@@ -309,9 +358,28 @@ export default function Settings() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {categories?.map((cat) => (
+            {orderedCats.map((cat, index) => (
               <div key={cat.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
+                  {/* Reorder buttons */}
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveCat(index, -1)}
+                      disabled={index === 0}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+                      aria-label="Move up"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => moveCat(index, 1)}
+                      disabled={index === orderedCats.length - 1}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+                      aria-label="Move down"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
                   <div>
                     <p className="text-sm font-medium">{cat.name}</p>
@@ -351,10 +419,7 @@ export default function Settings() {
                 <p className="text-sm font-medium">{label}</p>
                 <p className="text-xs text-muted-foreground">{desc}</p>
               </div>
-              <Switch
-                checked={val}
-                onCheckedChange={(v) => { set(v); saveNotif(key, v); }}
-              />
+              <Switch checked={val} onCheckedChange={(v) => { set(v); saveNotif(key, v); }} />
             </div>
           ))}
         </CardContent>
@@ -382,9 +447,7 @@ export default function Settings() {
       {/* Account Create/Edit Dialog */}
       <Dialog open={accDialogOpen} onOpenChange={setAccDialogOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{editAcc ? "Edit Account" : "Add Account"}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editAcc ? "Edit Account" : "Add Account"}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Account Name</Label>
@@ -405,17 +468,13 @@ export default function Settings() {
             <div className="space-y-1.5">
               <Label>Balance ($)</Label>
               <Input
-                type="number"
-                step="0.01"
+                type="number" step="0.01"
                 value={accForm.balance ?? 0}
                 onChange={(e) => setAccForm((f) => ({ ...f, balance: parseFloat(e.target.value) || 0 }))}
               />
             </div>
             <div className="flex items-center gap-3">
-              <Switch
-                checked={accForm.isJoint ?? false}
-                onCheckedChange={(v) => setAccForm((f) => ({ ...f, isJoint: v }))}
-              />
+              <Switch checked={accForm.isJoint ?? false} onCheckedChange={(v) => setAccForm((f) => ({ ...f, isJoint: v }))} />
               <Label>Joint account</Label>
             </div>
           </div>
@@ -443,9 +502,7 @@ export default function Settings() {
       {/* Category Create/Edit Dialog */}
       <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{editCat ? "Edit Category" : "Add Category"}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editCat ? "Edit Category" : "Add Category"}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Name</Label>
