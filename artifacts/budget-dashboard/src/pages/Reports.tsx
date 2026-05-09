@@ -19,12 +19,15 @@ import { formatCurrency, currentMonth, monthOptions } from "@/lib/format";
 const CHART_COLORS = ["#6366f1", "#14b8a6", "#f97316", "#ec4899", "#a855f7", "#f59e0b", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6"];
 
 const formatYAxis = (v: number) => `$${(v / 1000).toFixed(0)}k`;
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface ChartEntry { name: string; value: number; color: string; }
+interface TooltipProps { active?: boolean; payload?: ChartEntry[]; label?: string; }
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-lg p-3 shadow-md text-sm">
       <p className="font-medium mb-1">{label}</p>
-      {payload.map((e: any) => (
+      {payload.map((e) => (
         <p key={e.name} style={{ color: e.color }}>{e.name}: {formatCurrency(e.value)}</p>
       ))}
     </div>

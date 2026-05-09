@@ -52,7 +52,7 @@ export default function Savings() {
   const deleteGoal = useDeleteSavingsGoal();
   const contribute = useContributeSavingsGoal();
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/savings"] });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/savings-goals"] });
 
   const openNew = () => { setEditGoal(null); setForm(EMPTY_FORM); setDialogOpen(true); };
   const openEdit = (g: SavingsGoal) => {

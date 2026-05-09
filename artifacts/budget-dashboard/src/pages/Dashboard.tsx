@@ -45,12 +45,15 @@ function StatCard({ title, value, sub, icon: Icon, color }: {
 
 const formatYAxis = (v: number) => `$${(v / 1000).toFixed(0)}k`;
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface ChartEntry { name: string; value: number; color: string; }
+interface TooltipProps { active?: boolean; payload?: ChartEntry[]; label?: string; }
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-lg p-3 shadow-md text-sm">
       <p className="font-medium text-foreground mb-1">{label}</p>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <p key={entry.name} style={{ color: entry.color }}>
           {entry.name}: {formatCurrency(entry.value)}
         </p>
