@@ -8,7 +8,7 @@ import {
   useGetCategories,
   useGetPartners,
 } from "@workspace/api-client-react";
-import type { Bill } from "@workspace/api-client-react";
+import type { Bill, BillFrequency, BillOwnership, BillInputFrequency, BillInputOwnership, BillInput } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,14 +22,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, CheckCircle2, Circle } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 
-const EMPTY_FORM = {
+type BillForm = BillInput & { isPaidThisCycle: boolean };
+
+const EMPTY_FORM: BillForm = {
   name: "",
   amount: 0,
   dueDay: 1,
-  frequency: "monthly" as const,
-  ownership: "shared" as const,
+  frequency: "monthly",
+  ownership: "shared",
   paidById: 1,
-  categoryId: null as number | null,
+  categoryId: null,
   isActive: true,
   isPaidThisCycle: false,
   notes: "",
@@ -39,7 +41,7 @@ export default function Bills() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editBill, setEditBill] = useState<Bill | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState<BillForm>(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { data: bills, isLoading } = useGetBills();
@@ -60,8 +62,8 @@ export default function Bills() {
       name: b.name,
       amount: b.amount,
       dueDay: b.dueDay,
-      frequency: b.frequency as any,
-      ownership: b.ownership as any,
+      frequency: b.frequency as BillInputFrequency,
+      ownership: b.ownership as BillInputOwnership,
       paidById: b.paidById,
       categoryId: b.categoryId ?? null,
       isActive: b.isActive ?? true,
@@ -183,7 +185,7 @@ export default function Bills() {
             </div>
             <div className="space-y-1.5">
               <Label>Frequency</Label>
-              <Select value={form.frequency} onValueChange={(v) => setForm((f) => ({ ...f, frequency: v as any }))}>
+              <Select value={form.frequency} onValueChange={(v) => setForm((f) => ({ ...f, frequency: v as BillInputFrequency }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="monthly">Monthly</SelectItem>
@@ -195,7 +197,7 @@ export default function Bills() {
             </div>
             <div className="space-y-1.5">
               <Label>Ownership</Label>
-              <Select value={form.ownership} onValueChange={(v) => setForm((f) => ({ ...f, ownership: v as any }))}>
+              <Select value={form.ownership} onValueChange={(v) => setForm((f) => ({ ...f, ownership: v as BillInputOwnership }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="shared">Shared</SelectItem>

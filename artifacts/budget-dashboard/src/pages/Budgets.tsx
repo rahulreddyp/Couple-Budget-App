@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   useGetBudgets,
   useGetBudgetVsActual,
@@ -137,7 +137,7 @@ export default function Budgets() {
                     <Progress
                       value={pct}
                       className="h-2"
-                      style={{ "--progress-fill": over ? "hsl(var(--destructive))" : cat?.color || "hsl(var(--primary))" } as any}
+                      style={{ "--progress-fill": over ? "hsl(var(--destructive))" : cat?.color || "hsl(var(--primary))" } as React.CSSProperties}
                     />
                     <div className="flex justify-between mt-1.5">
                       <span className="text-xs text-muted-foreground">{formatCurrency(actual)} spent</span>

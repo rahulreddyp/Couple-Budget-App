@@ -7,7 +7,7 @@ import {
   useUpdateTransaction,
   useDeleteTransaction,
 } from "@workspace/api-client-react";
-import type { Transaction, TransactionInput } from "@workspace/api-client-react";
+import type { Transaction, TransactionInput, GetTransactionsType, GetTransactionsOwnership, TransactionInputType, TransactionInputOwnership, TransactionInputSplitType } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,8 +51,8 @@ export default function Transactions() {
   const params = {
     month,
     search: search || null,
-    type: typeFilter !== "all" ? (typeFilter as any) : null,
-    ownership: ownerFilter !== "all" ? (ownerFilter as any) : null,
+    type: typeFilter !== "all" ? (typeFilter as GetTransactionsType) : null,
+    ownership: ownerFilter !== "all" ? (ownerFilter as GetTransactionsOwnership) : null,
     categoryId: categoryFilter !== "all" ? Number(categoryFilter) : null,
     limit: 100,
     offset: 0,
@@ -273,7 +273,7 @@ export default function Transactions() {
             </div>
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as any }))}>
+              <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as TransactionInputType }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="expense">Expense</SelectItem>
@@ -283,7 +283,7 @@ export default function Transactions() {
             </div>
             <div className="space-y-1.5">
               <Label>Ownership</Label>
-              <Select value={form.ownership} onValueChange={(v) => setForm((f) => ({ ...f, ownership: v as any }))}>
+              <Select value={form.ownership} onValueChange={(v) => setForm((f) => ({ ...f, ownership: v as TransactionInputOwnership }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="shared">Shared</SelectItem>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   useGetSavingsGoals,
   useCreateSavingsGoal,
@@ -173,7 +173,7 @@ export default function Savings() {
                         <span className="text-muted-foreground">Saved</span>
                         <span className="font-semibold">{formatCurrency(goal.currentAmount)}</span>
                       </div>
-                      <Progress value={Math.min(pct, 100)} className="h-2" style={{ "--progress-fill": goal.color || "#6366f1" } as any} />
+                      <Progress value={Math.min(pct, 100)} className="h-2" style={{ "--progress-fill": goal.color || "#6366f1" } as React.CSSProperties} />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>{Math.round(pct)}% complete</span>
                         <span>{formatCurrency(remaining)} to go</span>
