@@ -6,15 +6,20 @@ import {
   useGetSharedVsPersonal,
   useGetTopMerchants,
   useGetSpendingHeatmap,
+  useGetAccounts,
+  useGetSavingsGoals,
+  useGetDashboardSummary,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { formatCurrency, currentMonth, monthOptions } from "@/lib/format";
+import { TrendingUp, Wallet, PiggyBank, CreditCard } from "lucide-react";
 
 const CHART_COLORS = ["#6366f1", "#14b8a6", "#f97316", "#ec4899", "#a855f7", "#f59e0b", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6"];
 
@@ -43,6 +48,9 @@ export default function Reports() {
   const { data: sharedVsPersonal } = useGetSharedVsPersonal({ months: 6 });
   const { data: topMerchants } = useGetTopMerchants({ month, limit: 10 });
   const { data: heatmap } = useGetSpendingHeatmap({ month });
+  const { data: accounts } = useGetAccounts();
+  const { data: savingsGoals } = useGetSavingsGoals();
+  const { data: summary } = useGetDashboardSummary({ month });
 
   // Transform partner comparison for chart
   const partnerChartData = (() => {
@@ -68,9 +76,24 @@ export default function Reports() {
     return `rgba(99, 102, 241, ${alpha})`;
   };
 
+  // Net worth computation
+  const assetAccounts = accounts?.filter((a) => a.type !== "credit") ?? [];
+  const liabilityAccounts = accounts?.filter((a) => a.type === "credit") ?? [];
+  const totalAssets = assetAccounts.reduce((s, a) => s + (a.balance ?? 0), 0);
+  const totalLiabilities = liabilityAccounts.reduce((s, a) => s + (a.balance ?? 0), 0);
+  const netWorth = totalAssets - totalLiabilities;
+  const totalSavings = savingsGoals?.reduce((s, g) => s + (g.currentAmount ?? 0), 0) ?? 0;
+  const totalSavingsTargets = savingsGoals?.reduce((s, g) => s + (g.targetAmount ?? 0), 0) ?? 1;
+
+  const netWorthPie = [
+    { name: "Checking/Savings", value: assetAccounts.filter((a) => a.type !== "joint").reduce((s, a) => s + (a.balance ?? 0), 0), color: "#10b981" },
+    { name: "Joint Accounts", value: assetAccounts.filter((a) => a.type === "joint").reduce((s, a) => s + (a.balance ?? 0), 0), color: "#6366f1" },
+    { name: "Credit Card Debt", value: totalLiabilities, color: "#ef4444" },
+  ].filter((e) => e.value > 0);
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Reports</h1>
           <p className="text-muted-foreground text-sm">Deep-dive analytics for Alex & Jordan</p>
@@ -84,13 +107,15 @@ export default function Reports() {
       </div>
 
       <Tabs defaultValue="trends">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex flex-wrap h-auto gap-1">
           <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="partners">Partners</TabsTrigger>
           <TabsTrigger value="merchants">Merchants</TabsTrigger>
+          <TabsTrigger value="networth">Net Worth</TabsTrigger>
         </TabsList>
 
+        {/* Trends Tab */}
         <TabsContent value="trends" className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
@@ -180,6 +205,7 @@ export default function Reports() {
           )}
         </TabsContent>
 
+        {/* Categories Tab */}
         <TabsContent value="categories">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
@@ -226,6 +252,7 @@ export default function Reports() {
           </div>
         </TabsContent>
 
+        {/* Partners Tab */}
         <TabsContent value="partners" className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
@@ -267,6 +294,7 @@ export default function Reports() {
           </div>
         </TabsContent>
 
+        {/* Merchants Tab */}
         <TabsContent value="merchants">
           <Card>
             <CardHeader className="pb-2">
@@ -299,6 +327,186 @@ export default function Reports() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Net Worth Tab */}
+        <TabsContent value="networth" className="space-y-4">
+          {/* Net Worth Summary KPIs */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Net Worth</p>
+                    <p className={`text-xl font-bold mt-1 ${netWorth >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                      {formatCurrency(netWorth)}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-indigo-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total Assets</p>
+                    <p className="text-xl font-bold mt-1 text-emerald-600">{formatCurrency(totalAssets)}</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                    <Wallet className="w-4 h-4 text-emerald-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Savings Goals</p>
+                    <p className="text-xl font-bold mt-1">{formatCurrency(totalSavings)}</p>
+                    <p className="text-xs text-muted-foreground">{Math.round((totalSavings / totalSavingsTargets) * 100)}% of targets</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <PiggyBank className="w-4 h-4 text-blue-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Liabilities</p>
+                    <p className="text-xl font-bold mt-1 text-destructive">{formatCurrency(totalLiabilities)}</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                    <CreditCard className="w-4 h-4 text-red-500" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Net Worth Donut */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Asset Allocation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Pie data={netWorthPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3}>
+                      {netWorthPie.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(val: number) => formatCurrency(val)} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Account Balances */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Account Balances</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {accounts?.map((acc) => {
+                    const isLiability = acc.type === "credit";
+                    const balance = acc.balance ?? 0;
+                    const maxBalance = Math.max(...(accounts?.map((a) => Math.abs(a.balance ?? 0)) ?? [1]), 1);
+                    const pct = Math.min((Math.abs(balance) / maxBalance) * 100, 100);
+                    return (
+                      <div key={acc.id}>
+                        <div className="flex items-center justify-between mb-1 text-sm">
+                          <span className="font-medium">{acc.name}</span>
+                          <span className={`font-semibold ${isLiability ? "text-destructive" : "text-emerald-600"}`}>
+                            {isLiability ? "−" : ""}{formatCurrency(Math.abs(balance))}
+                          </span>
+                        </div>
+                        <Progress
+                          value={pct}
+                          className="h-1.5"
+                          style={{ "--progress-fill": isLiability ? "hsl(var(--destructive))" : "#10b981" } as React.CSSProperties}
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{acc.type} · {acc.isJoint ? "Joint" : "Personal"}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Savings Goals Progress */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Savings Goals Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {savingsGoals?.map((goal) => {
+                  const pct = goal.targetAmount > 0 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100) : 0;
+                  const remaining = goal.targetAmount - goal.currentAmount;
+                  return (
+                    <div key={goal.id}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div>
+                          <p className="text-sm font-medium">{goal.name}</p>
+                          {goal.targetDate && (
+                            <p className="text-xs text-muted-foreground">Target: {goal.targetDate}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">{formatCurrency(goal.currentAmount)}</p>
+                          <p className="text-xs text-muted-foreground">of {formatCurrency(goal.targetAmount)}</p>
+                        </div>
+                      </div>
+                      <Progress
+                        value={pct}
+                        className="h-2"
+                        style={{ "--progress-fill": goal.color || "#6366f1" } as React.CSSProperties}
+                      />
+                      <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                        <span>{Math.round(pct)}% complete</span>
+                        <span>{formatCurrency(remaining)} to go</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Monthly savings rate */}
+          {summary && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">This Month's Financial Health</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: "Savings Rate", value: `${summary.savingsRate.toFixed(1)}%`, sub: "of income saved", good: summary.savingsRate >= 20 },
+                    { label: "Fixed vs Income", value: `${((summary.fixedExpenses / (summary.totalIncome || 1)) * 100).toFixed(1)}%`, sub: "of income on fixed costs", good: summary.fixedExpenses / (summary.totalIncome || 1) < 0.5 },
+                    { label: "Month Forecast", value: formatCurrency(summary.forecastEndOfMonth), sub: "projected balance", good: summary.forecastEndOfMonth > 0 },
+                    { label: "Net Savings", value: formatCurrency(summary.totalSavings), sub: "this month", good: summary.totalSavings > 0 },
+                  ].map(({ label, value, sub, good }) => (
+                    <div key={label} className="text-center p-3 rounded-lg bg-muted/40">
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className={`text-xl font-bold mt-1 ${good ? "text-emerald-600" : "text-destructive"}`}>{value}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

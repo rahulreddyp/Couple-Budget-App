@@ -219,14 +219,34 @@ export default function Settings() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const data = JSON.parse(ev.target?.result as string);
-        const txCount = data.transactions?.length ?? 0;
-        const billCount = data.bills?.length ?? 0;
+
+        const res = await fetch("/api/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            transactions: data.transactions ?? [],
+            bills: data.bills ?? [],
+            savingsGoals: data.savingsGoals ?? [],
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Unknown error" }));
+          toast({ title: "Import failed", description: String(err.error ?? "Server error"), variant: "destructive" });
+          return;
+        }
+
+        const result = await res.json();
+        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/savings-goals"] });
+
         toast({
-          title: "Import preview",
-          description: `Found ${txCount} transactions and ${billCount} bills in backup.`,
+          title: "Import complete",
+          description: `Imported ${result.imported.transactions} transactions, ${result.imported.bills} bills, ${result.imported.savingsGoals} savings goals.`,
         });
       } catch {
         toast({ title: "Invalid file", description: "Could not parse the JSON file.", variant: "destructive" });
