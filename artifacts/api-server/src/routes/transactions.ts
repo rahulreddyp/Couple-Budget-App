@@ -148,7 +148,7 @@ router.post("/transactions", async (req, res) => {
       type: b.type ?? "expense",
       ownership: b.ownership ?? "shared",
       splitType: b.splitType ?? "fifty_fifty",
-      splitRatio: b.splitRatio !== undefined ? String(b.splitRatio) : null,
+      splitRatio: b.splitRatio != null ? String(b.splitRatio) : null,
       paidById: b.paidById,
       categoryId: b.categoryId,
       accountId: b.accountId ?? null,
