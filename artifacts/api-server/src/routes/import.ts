@@ -5,7 +5,10 @@ const router = Router();
 
 function str(v: unknown) { return v !== undefined && v !== null ? String(v) : null; }
 function num(v: unknown) { return v !== undefined && v !== null && v !== "" ? String(parseFloat(String(v))) : null; }
-function bool(v: unknown) { return Boolean(v); }
+function bool(v: unknown) {
+  if (v === "false" || v === "0" || v === 0 || v === false || v === null || v === undefined) return false;
+  return true;
+}
 
 router.post("/import", async (req, res) => {
   try {

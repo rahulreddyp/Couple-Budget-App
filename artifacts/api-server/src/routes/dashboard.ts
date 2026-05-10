@@ -78,10 +78,16 @@ router.get("/dashboard/summary", async (req, res) => {
       }
     }
 
-    // Forecast: extrapolate based on days elapsed
+    // Forecast: extrapolate based on days elapsed in the *requested* month
+    const [reqYear, reqMon] = month.split("-").map(Number);
+    const daysInMonth = new Date(reqYear, reqMon, 0).getDate();
     const today = new Date();
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    const dayOfMonth = Math.max(1, today.getDate());
+    const isCurrentMonth =
+      today.getFullYear() === reqYear && today.getMonth() + 1 === reqMon;
+    // For past/future months use full month; for current month use days elapsed
+    const dayOfMonth = isCurrentMonth
+      ? Math.max(1, today.getDate())
+      : daysInMonth;
     const forecastEndOfMonth = totalExpenses > 0 ? Math.round((totalExpenses / dayOfMonth) * daysInMonth) : 0;
 
     const remainingBudget = totalIncome - totalExpenses;

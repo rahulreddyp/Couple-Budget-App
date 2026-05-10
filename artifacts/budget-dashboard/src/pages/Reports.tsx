@@ -86,8 +86,8 @@ export default function Reports() {
   const totalSavingsTargets = savingsGoals?.reduce((s, g) => s + (g.targetAmount ?? 0), 0) ?? 1;
 
   const netWorthPie = [
-    { name: "Checking/Savings", value: assetAccounts.filter((a) => a.type !== "joint").reduce((s, a) => s + (a.balance ?? 0), 0), color: "#10b981" },
-    { name: "Joint Accounts", value: assetAccounts.filter((a) => a.type === "joint").reduce((s, a) => s + (a.balance ?? 0), 0), color: "#6366f1" },
+    { name: "Checking/Savings", value: assetAccounts.filter((a) => !a.isJoint).reduce((s, a) => s + (a.balance ?? 0), 0), color: "#10b981" },
+    { name: "Joint Accounts", value: assetAccounts.filter((a) => a.isJoint).reduce((s, a) => s + (a.balance ?? 0), 0), color: "#6366f1" },
     { name: "Credit Card Debt", value: totalLiabilities, color: "#ef4444" },
   ].filter((e) => e.value > 0);
 
