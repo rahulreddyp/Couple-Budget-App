@@ -515,6 +515,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/Bill"
 
+  /bills/{id}/unmark-paid:
+    post:
+      operationId: unmarkBillPaid
+      tags: [bills]
+      summary: Unmark a bill as paid for the current cycle
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Updated bill
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bill"
+
   # ── Savings Goals ─────────────────────────────────────────────────────────
   /savings-goals:
     get:
