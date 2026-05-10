@@ -96,23 +96,37 @@ router.get("/transactions", async (req, res) => {
       .from(transactionsTable)
       .where(whereClause);
 
-    // Sorting
-    const sortColumn =
-      sortBy === "amount" ? transactionsTable.amount :
-      sortBy === "merchant" ? transactionsTable.merchant :
-      transactionsTable.date;
-    const orderFn = sortDir === "asc" ? asc : desc;
-
-    const rows = await db
-      .select()
-      .from(transactionsTable)
-      .where(whereClause)
-      .orderBy(orderFn(sortColumn))
-      .limit(limit ? parseInt(limit) : 100)
-      .offset(offset ? parseInt(offset) : 0);
-
     const catMap = await getCatMap();
     const partnerMap = await getPartnerMap();
+
+    // Sorting
+    const orderFn = sortDir === "asc" ? asc : desc;
+
+    let rows;
+    if (sortBy === "category") {
+      // Join with categories to sort by name
+      const joined = await db
+        .select({ tx: transactionsTable, catName: categoriesTable.name })
+        .from(transactionsTable)
+        .leftJoin(categoriesTable, eq(transactionsTable.categoryId, categoriesTable.id))
+        .where(whereClause)
+        .orderBy(orderFn(categoriesTable.name))
+        .limit(limit ? parseInt(limit) : 100)
+        .offset(offset ? parseInt(offset) : 0);
+      rows = joined.map((r) => r.tx);
+    } else {
+      const sortColumn =
+        sortBy === "amount" ? transactionsTable.amount :
+        sortBy === "merchant" ? transactionsTable.merchant :
+        transactionsTable.date;
+      rows = await db
+        .select()
+        .from(transactionsTable)
+        .where(whereClause)
+        .orderBy(orderFn(sortColumn))
+        .limit(limit ? parseInt(limit) : 100)
+        .offset(offset ? parseInt(offset) : 0);
+    }
 
     res.json({
       data: rows.map((t) => txRow(t as unknown as Record<string, unknown>, catMap, partnerMap)),

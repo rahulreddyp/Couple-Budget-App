@@ -112,6 +112,22 @@ router.delete("/bills/:id", async (req, res) => {
   }
 });
 
+router.post("/bills/:id/unmark-paid", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const [row] = await db.update(billsTable)
+      .set({ isPaidThisCycle: false })
+      .where(eq(billsTable.id, id))
+      .returning();
+    if (!row) { res.status(404).json({ error: "Not found" }); return; }
+    const [enriched] = await enrichBills([row]);
+    res.json(enriched);
+  } catch {
+    res.status(500).json({ error: "Failed to unmark bill paid" });
+    return;
+  }
+});
+
 router.post("/bills/:id/mark-paid", async (req, res) => {
   try {
     const id = parseInt(req.params.id);

@@ -84,13 +84,21 @@ export default function Settings() {
     if (saved) setCatsOrder(saved);
   }, []);
 
-  const moveCat = (index: number, dir: -1 | 1) => {
+  const moveCat = async (index: number, dir: -1 | 1) => {
     const newOrder = [...orderedCats.map((c) => c.id)];
     const swapIdx = index + dir;
     if (swapIdx < 0 || swapIdx >= newOrder.length) return;
     [newOrder[index], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[index]];
     setCatsOrder(newOrder);
     saveCatsOrder(newOrder);
+    // Persist sortOrder to backend for both swapped categories
+    const idA = newOrder[index];
+    const idB = newOrder[swapIdx];
+    await Promise.all([
+      updateCat.mutateAsync({ id: idA, data: { sortOrder: index } as Parameters<typeof updateCat.mutateAsync>[0]["data"] }),
+      updateCat.mutateAsync({ id: idB, data: { sortOrder: swapIdx } as Parameters<typeof updateCat.mutateAsync>[0]["data"] }),
+    ]);
+    invalidateCats();
   };
 
   // Category dialog
