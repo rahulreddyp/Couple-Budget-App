@@ -5,6 +5,7 @@ import {
   useUpdateBill,
   useDeleteBill,
   useMarkBillPaid,
+  useUnmarkBillPaid,
   useGetCategories,
   useGetPartners,
 } from "@workspace/api-client-react";
@@ -52,6 +53,7 @@ export default function Bills() {
   const updateBill = useUpdateBill();
   const deleteBill = useDeleteBill();
   const markPaid = useMarkBillPaid();
+  const unmarkPaid = useUnmarkBillPaid();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
 
@@ -89,7 +91,11 @@ export default function Bills() {
   };
 
   const handleTogglePaid = async (bill: Bill) => {
-    await markPaid.mutateAsync({ id: bill.id });
+    if (bill.isPaidThisCycle) {
+      await unmarkPaid.mutateAsync({ id: bill.id });
+    } else {
+      await markPaid.mutateAsync({ id: bill.id });
+    }
     invalidate();
   };
 

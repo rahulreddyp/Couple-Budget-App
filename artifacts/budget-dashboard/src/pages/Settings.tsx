@@ -91,13 +91,12 @@ export default function Settings() {
     [newOrder[index], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[index]];
     setCatsOrder(newOrder);
     saveCatsOrder(newOrder);
-    // Persist sortOrder to backend for both swapped categories
-    const idA = newOrder[index];
-    const idB = newOrder[swapIdx];
-    await Promise.all([
-      updateCat.mutateAsync({ id: idA, data: { sortOrder: index } as Parameters<typeof updateCat.mutateAsync>[0]["data"] }),
-      updateCat.mutateAsync({ id: idB, data: { sortOrder: swapIdx } as Parameters<typeof updateCat.mutateAsync>[0]["data"] }),
-    ]);
+    // Persist full normalized sortOrder to backend for all categories
+    await Promise.all(
+      newOrder.map((id, i) =>
+        updateCat.mutateAsync({ id, data: { sortOrder: i } as Parameters<typeof updateCat.mutateAsync>[0]["data"] })
+      )
+    );
     invalidateCats();
   };
 

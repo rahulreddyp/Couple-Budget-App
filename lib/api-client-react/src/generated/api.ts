@@ -2166,6 +2166,85 @@ export const useMarkBillPaid = <
 };
 
 /**
+ * @summary Unmark a bill as paid for the current cycle
+ */
+export const getUnmarkBillPaidUrl = (id: number) => {
+  return `/api/bills/${id}/unmark-paid`;
+};
+
+export const unmarkBillPaid = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Bill> => {
+  return customFetch<Bill>(getUnmarkBillPaidUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getUnmarkBillPaidMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unmarkBillPaid>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unmarkBillPaid>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["unmarkBillPaid"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unmarkBillPaid>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+    return unmarkBillPaid(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnmarkBillPaidMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unmarkBillPaid>>
+>;
+export type UnmarkBillPaidMutationError = ErrorType<unknown>;
+
+export const useUnmarkBillPaid = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unmarkBillPaid>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unmarkBillPaid>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getUnmarkBillPaidMutationOptions(options));
+};
+
+/**
  * @summary List all savings goals
  */
 export const getGetSavingsGoalsUrl = () => {
