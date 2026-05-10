@@ -189,17 +189,15 @@ export default function Settings() {
   // — Data export —
   const handleExport = async () => {
     try {
-      const [txRes, billsRes, budgetsRes, goalsRes] = await Promise.all([
+      const [txRes, billsRes, goalsRes] = await Promise.all([
         fetch("/api/transactions?limit=10000"),
         fetch("/api/bills"),
-        fetch("/api/budgets"),
         fetch("/api/savings-goals"),
       ]);
       const data = {
         exportedAt: new Date().toISOString(),
         transactions: (await txRes.json()).data ?? [],
         bills: await billsRes.json(),
-        budgets: await budgetsRes.json(),
         savingsGoals: await goalsRes.json(),
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -451,7 +449,7 @@ export default function Settings() {
           <CardTitle className="flex items-center gap-2 text-base">
             <Download className="w-4 h-4" /> Data & Export
           </CardTitle>
-          <CardDescription>Export your data as JSON or import a previous backup</CardDescription>
+          <CardDescription>Export and import transactions, bills, and savings goals as JSON</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <Button variant="outline" className="gap-2" onClick={handleExport}>
