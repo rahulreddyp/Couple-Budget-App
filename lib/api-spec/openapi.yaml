@@ -263,14 +263,20 @@ paths:
           schema: { type: ["string", "null"] }
         - name: sortBy
           in: query
+          description: >
+            Comma-separated ordered list of sort fields.
+            Each field must be one of: date, amount, merchant, category.
+            Example: "date,amount" sorts by date first, then amount.
           schema:
             type: ["string", "null"]
-            enum: [date, amount, merchant, category, null]
         - name: sortDir
           in: query
+          description: >
+            Comma-separated ordered list of sort directions, aligned positionally with sortBy.
+            Each value must be one of: asc, desc.
+            Example: "desc,asc" — first field descending, second ascending.
           schema:
             type: ["string", "null"]
-            enum: [asc, desc, null]
         - name: limit
           in: query
           schema: { type: ["integer", "null"] }
