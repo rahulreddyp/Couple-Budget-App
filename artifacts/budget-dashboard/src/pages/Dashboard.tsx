@@ -423,7 +423,7 @@ export default function Dashboard() {
       {/* Chart 8: Spending Heatmap */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Daily Spending Heatmap (3 months)</CardTitle>
+          <CardTitle className="text-sm font-semibold">Daily Spending Heatmap</CardTitle>
         </CardHeader>
         <CardContent>
           {heatmapData && heatmapData.length > 0

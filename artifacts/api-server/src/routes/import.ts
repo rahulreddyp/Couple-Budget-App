@@ -65,8 +65,8 @@ router.post("/import", async (req, res) => {
         targetAmount: String(parseFloat(String(g.targetAmount)) || 0),
         currentAmount: String(parseFloat(String(g.currentAmount)) || 0),
         targetDate: g.targetDate ? String(g.targetDate) : null,
-        description: str(g.description),
-        isJoint: bool(g.isJoint),
+        ownerId: g.ownerId ? parseInt(String(g.ownerId)) : null,
+        notes: str(g.notes),
         color: String(g.color || "#6366f1"),
         icon: String(g.icon || "piggy-bank"),
       }));
