@@ -1,4 +1,16 @@
 {
-  "buildCommand": "pnpm --filter @workspace/api-zod --filter @workspace/db run build --if-present; pnpm run build",
-  "installCommand": "pnpm install"
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "outputDirectory": "dist",
+  "functions": {
+    "dist/index.mjs": {
+      "runtime": "nodejs22.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/index.mjs"
+    }
+  ]
 }
