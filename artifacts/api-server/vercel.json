@@ -1,0 +1,4 @@
+{
+  "buildCommand": "pnpm --filter @workspace/api-zod --filter @workspace/db run build --if-present; pnpm run build",
+  "installCommand": "pnpm install"
+}
