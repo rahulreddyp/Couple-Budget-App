@@ -3,7 +3,7 @@
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "includeFiles": "dist/**"
     }
   },
