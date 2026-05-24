@@ -2,6 +2,11 @@
   "version": 2,
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "dist/**"
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index" }
   ]
